@@ -26,9 +26,7 @@ export default function Index() {
     <View style={style.container}>
 
       <SafeAreaView>
-        <Image>
-          
-        </Image>
+        <Image style={style.ortaresim} source={require("../assets/images/halısaha pixel.png")}/>
       </SafeAreaView>
       
       
