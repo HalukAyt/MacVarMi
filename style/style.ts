@@ -26,14 +26,14 @@ const styles = StyleSheet.create({
     text: {
         fontSize: 20,
         alignItems: "flex-start",
-        color:"#fff",
-        
-        
+        color: "#fff",
+
+
 
     },
     textMacOlustur: {
         fontSize: 20,
-        justifyContent:"flex-start",
+        justifyContent: "flex-start",
     },
 
     textinput: {
@@ -47,26 +47,34 @@ const styles = StyleSheet.create({
 
     },
 
-    macDetay:{
-        backgroundColor:"#504747ff",
-        width:380,
-        borderRadius:10,
-        padding:10,
-        margin:30,
-        alignSelf:"flex-start",
+    macDetay: {
+        backgroundColor: "#504747ff",
+        width: 380,
+        borderRadius: 10,
+        padding: 10,
+        margin: 30,
+        alignSelf: "flex-start",
         justifyContent: "space-between",
         marginVertical: 10,
-  paddingHorizontal: 20, 
-   flexDirection: "row",
-        
+        paddingHorizontal: 20,
+        flexDirection: "row",
+
     },
 
-    sahafoto:{
+    sahafoto: {
         width: 60,
-  height: 60,
-  borderRadius: 10,
-        
-        
+        height: 60,
+        borderRadius: 10,
+
+
+    },
+
+    ortaresim: {
+        height:400,
+        width:400,
+        borderRadius:10,
+        borderColor:"#000000ff",
+        borderWidth:2
     }
 });
 

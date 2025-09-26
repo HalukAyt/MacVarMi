@@ -1,4 +1,4 @@
-import { Text, TextInput, TouchableOpacity, View,Image } from "react-native";
+import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import style from "../style/style";
@@ -20,9 +20,7 @@ export default function Index() {
     <View style={style.container}>
 
       <SafeAreaView>
-        <Image>
-          
-        </Image>
+        <Image style={style.ortaresim} source={require("../assets/images/halısaha pixel.png")}/>
       </SafeAreaView>
       
       
