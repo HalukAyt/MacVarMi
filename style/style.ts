@@ -5,8 +5,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "flex-start", // yukarı hizalama
     alignItems: "center",         // yatayda ortalama
-    backgroundColor: "#fff",
-    paddingTop: 40,               // status bar boşluğu
+    backgroundColor: "#eff5d2",
+    
   },
 
   title: {
@@ -22,7 +22,8 @@ const styles = StyleSheet.create({
     height: 50,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 20,
+    marginTop: 5,
+    color:"#fff"
   },
 
   text: {
@@ -34,7 +35,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     color: "#000",
-    marginBottom: 20,
+    marginBottom: 10,
     alignSelf: "flex-start", // başlık sola
     paddingHorizontal: 20,
   },
@@ -46,19 +47,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     height: 50,
     color: "#000",
-    width: "90%",
+    width: 300,
     marginTop: 20,
+    backgroundColor:"#fff"
   },
 
   macDetay: {
-    backgroundColor: "#504747ff",
+    backgroundColor: "#A8BBA3",
     width: "90%",
     borderRadius: 10,
     padding: 10,
     marginVertical: 10,
     flexDirection: "row",          // yan yana
     justifyContent: "space-between", // yazılar solda, resim sağda
-    alignItems: "center",           // dikeyde hizalı
+    alignItems: "center",     // dikeyde hizalı
+    
   },
 
   macDetayText: {
