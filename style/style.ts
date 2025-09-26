@@ -62,12 +62,16 @@ const styles = StyleSheet.create({
     },
 
     sahafoto:{
-        width: 60,
-  height: 60,
+        width: 80,
+  height: 80,
   borderRadius: 10,
-        
-        
+    },
+
+    macDetayText:{
+        marginTop:10,
+        flexDirection: "column"
     }
+
 });
 
 export default styles;
