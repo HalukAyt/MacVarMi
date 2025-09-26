@@ -23,20 +23,26 @@ export default function Index() {
   />
 </View>
 
-    <View style={style.container}>
+    
 
       <SafeAreaView>
         <Image style={style.ortaresim} source={require("../assets/images/halısaha pixel.png")}/>
       </SafeAreaView>
       
       
-       <FontAwesome name="download" size={30} color="#900" />
+       
 
 
 
-      <TextInput placeholder="yorum yaz" style={style.textinput}></TextInput>
-      <TouchableOpacity style={style.button} >İstek At</TouchableOpacity>
-    </View>
+      
+
+      <View style={style.container}>
+       
+        <TextInput placeholder="yorum yaz" style={style.textinput}></TextInput>
+        <TouchableOpacity style={style.button}><Text style={style.text}>Gönder</Text></TouchableOpacity>
+
+      </View>
+      
     </SafeAreaView>
 
 
