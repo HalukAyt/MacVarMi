@@ -1,81 +1,83 @@
-// constants/styles.ts
 import { StyleSheet } from "react-native";
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "#fff",
-    },
-    title: {
-        fontSize: 20,
-        fontWeight: "bold",
-        color: "#000",
-    },
-    button: {
-        borderRadius: 20,
-        backgroundColor: "#403e3eff",
-        color: "#fff",
-        width: 100,
-        height: 75,
-        justifyContent: "center",
-        alignItems: "center"
-    },
+  container: {
+    flex: 1,
+    justifyContent: "flex-start", // yukarı hizalama
+    alignItems: "center",         // yatayda ortalama
+    backgroundColor: "#fff",
+    paddingTop: 40,               // status bar boşluğu
+  },
 
-    text: {
-        fontSize: 20,
-        alignItems: "flex-start",
-        color: "#fff",
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#000",
+  },
 
+  button: {
+    borderRadius: 20,
+    backgroundColor: "#403e3eff",
+    width: 100,
+    height: 50,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 20,
+  },
 
+  text: {
+    fontSize: 16,
+    color: "#fff",
+  },
 
-    },
-    textMacOlustur: {
-        fontSize: 20,
-        justifyContent: "flex-start",
-    },
+  textMacOlustur: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#000",
+    marginBottom: 20,
+    alignSelf: "flex-start", // başlık sola
+    paddingHorizontal: 20,
+  },
 
-    textinput: {
-        borderRadius: 20,
-        borderColor: "#403e3eff",
-        borderWidth: 1,        // eklemen lazım
-        paddingHorizontal: 10, // yazı kutunun içine girmesin diye
-        height: 70,            // yüksekliği de ayarla
-        color: "#000",
-        width: 400
+  textinput: {
+    borderRadius: 20,
+    borderColor: "#403e3eff",
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    height: 50,
+    color: "#000",
+    width: "90%",
+    marginTop: 20,
+  },
 
-    },
+  macDetay: {
+    backgroundColor: "#504747ff",
+    width: "90%",
+    borderRadius: 10,
+    padding: 10,
+    marginVertical: 10,
+    flexDirection: "row",          // yan yana
+    justifyContent: "space-between", // yazılar solda, resim sağda
+    alignItems: "center",           // dikeyde hizalı
+  },
 
-    macDetay: {
-        backgroundColor: "#504747ff",
-        width: 380,
-        borderRadius: 10,
-        padding: 10,
-        margin: 30,
-        alignSelf: "flex-start",
-        justifyContent: "space-between",
-        marginVertical: 10,
-        paddingHorizontal: 20,
-        flexDirection: "row",
+  macDetayText: {
+    flexDirection: "column",       // yazıları dikey tut
+  },
 
-    },
+  sahafoto: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+  },
 
-    sahafoto: {
-        width: 60,
-        height: 60,
-        borderRadius: 10,
-
-
-    },
-
-    ortaresim: {
-        height:400,
-        width:400,
-        borderRadius:10,
-        borderColor:"#000000ff",
-        borderWidth:2
-    }
+  ortaresim: {
+    height: 400,
+    width: 400,
+    borderRadius: 10,
+    borderColor: "#000",
+    borderWidth: 2,
+  },
 });
 
 export default styles;

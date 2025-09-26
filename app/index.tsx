@@ -13,10 +13,16 @@ export default function Index() {
     
       <Text style={style.textMacOlustur}>Maç Oluştur</Text>
     <View style={style.macDetay}>
-      <Text style={style.text}>FerhatPaşa</Text>
-      <Text style={style.text}>Halısaha 23.00</Text>
-      <Image style={style.sahafoto} source={require("../assets/images/sahafoto.jpeg")}/>
-      </View>
+    <View style={style.macDetayText}>
+    <Text style={style.text}>FerhatPaşa</Text>
+    <Text style={style.text}>Halısaha 23.00</Text>
+  </View>
+  <Image
+    style={style.sahafoto}
+    source={require("../assets/images/sahafoto.jpeg")}
+  />
+</View>
+
     <View style={style.container}>
 
       <SafeAreaView>
