@@ -1,10 +1,10 @@
 // app/match/[id].tsx
-import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useMemo, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import RequestsModal from '../../../components/RequestModal';
 import { useAppStore } from '../../../src/context/AppStore';
 import type { Match, Position, RosterEntry } from '../../../src/types';
-import RequestsModal from '../../../components/RequestModal';
 
 export default function MatchDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();

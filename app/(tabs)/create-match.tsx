@@ -67,7 +67,7 @@ export default function CreateMatch() {
       const created = await MatchesApi.create(body); // 201 ile match dönecek
       Alert.alert("Başarılı", "Maç oluşturuldu!");
       // Detaya git
-      router.replace({ pathname: "/(tabs)/match/[id]", params: { id: String(created.id) } });
+      router.replace({ pathname: "/match/[id]", params: { id: String(created.id) } });
     }  catch (e: any) {
   console.log("Create error:", e);               // Metro console’a tam hata
   console.log("Create error status:", e?.status);

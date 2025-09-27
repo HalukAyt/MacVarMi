@@ -34,7 +34,7 @@ router.replace("/(tabs)/matches");
   }
 
   return (
-    <View style={{ padding: 16, gap: 12 }}>
+    <View style={{ padding: 16, gap: 12 , marginTop:50}}>
       <TextInput
         placeholder="Email"
         value={email}

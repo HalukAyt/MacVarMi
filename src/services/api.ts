@@ -3,7 +3,7 @@ import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const LOCAL_PORT = 5136;
-const API_URL = Platform.select({
+export const API_URL = Platform.select({
   android: `http://10.0.2.2:${LOCAL_PORT}`,
   ios: `http://localhost:${LOCAL_PORT}`,
   default: `http://10.0.2.2:${LOCAL_PORT}`,
@@ -15,46 +15,65 @@ export async function setToken(t: string) {
   memToken = t;
   try { await AsyncStorage.setItem("auth_token", t); } catch {}
 }
+
 export async function clearToken() {
   memToken = null;
   try { await AsyncStorage.removeItem("auth_token"); } catch {}
 }
+
 async function getToken(): Promise<string | null> {
   if (memToken) return memToken;
   try {
-    memToken = await AsyncStorage.getItem("auth_token");
-    return memToken;
+    const t = await AsyncStorage.getItem("auth_token");
+    memToken = t;
+    return t;
   } catch {
     return null;
   }
 }
 
-type HttpError = { status: number; body?: any; message: string };
+type ReqInit = Omit<RequestInit, "headers" | "body"> & {
+  method?: "GET" | "POST" | "PUT" | "DELETE";
+  body?: string | undefined;
+};
 
-function safeJSONParse(t: string) { try { return JSON.parse(t); } catch { return null; } }
-
-async function request(path: string, options: RequestInit = {}) {
+async function request(path: string, init: ReqInit = {}) {
   const token = await getToken();
+
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(options.headers as Record<string, string> | undefined),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    "Accept": "application/json",
   };
 
-  if (__DEV__) {
-    console.log("[api] URL:", `${API_URL}${path}`);
-    console.log("[api] Authorization:", headers.Authorization ? headers.Authorization.slice(0, 30) + "..." : "YOK");
+  // Body varsa JSON gönder
+  if (init.body) {
+    headers["Content-Type"] = "application/json";
   }
 
-  const res = await fetch(`${API_URL}${path}`, { ...options, headers });
-  const text = await res.text();                // 204/boş gövde güvenli
-  const data = text ? safeJSONParse(text) : null;
+  // Token varsa Authorization ekle
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(`${API_URL}${path}`, {
+    ...init,
+    headers,
+  });
+
+  // 401 geldiğinde token süresi dolmuş olabilir → kullanıcıyı çıkışa yönlendirin
+  if (res.status === 401) {
+    // İstersen burada clearToken() çağırıp login ekranına yönlendirebilirsin
+    // await clearToken();
+    throw new Error("Unauthorized (401): Giriş yapmanız gerekiyor.");
+  }
 
   if (!res.ok) {
-    const err: HttpError = { status: res.status, body: data ?? text, message: res.statusText };
-    throw err;
+    const text = await res.text().catch(() => "");
+    throw new Error(text || `HTTP ${res.status}`);
   }
-  return data ?? {};                         
+
+  if (res.status === 204) return null;
+  const ct = res.headers.get("content-type") || "";
+  return ct.includes("application/json") ? res.json() : res.text();
 }
 
 const api = {
@@ -66,5 +85,4 @@ const api = {
   del: (path: string) => request(path, { method: "DELETE" }),
 };
 
-export { API_URL };
 export default api;
