@@ -2,8 +2,11 @@
 import { Tabs } from "expo-router";
 import FontAwesome from "@expo/vector-icons/FontAwesome"; // tercih: @expo/vector-icons
 
+import { AppStoreProvider } from "../src/context/AppStore";
+
 export default function Layout() {
   return (
+    <AppStoreProvider>
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -30,6 +33,16 @@ export default function Layout() {
           ),
         }}
       />
+
+      <Tabs.Screen
+        name="reviews"
+        options={{
+          title: "Puanla",
+          tabBarIcon: ({ color, size }) => (
+            <FontAwesome name="star" size={size} color={color} />
+          ),
+        }}
+      />
       <Tabs.Screen
         name="settings"
         options={{
@@ -40,5 +53,6 @@ export default function Layout() {
         }}
       />
     </Tabs>
+    </AppStoreProvider>
   );
 }
