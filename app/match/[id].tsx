@@ -48,11 +48,13 @@ export default function MatchDetail() {
   }
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16 }}>
+    <ScrollView style={{backgroundColor: "#eff5d2"}} contentContainerStyle={{ padding: 16, marginTop:50 }}>
       <Text style={styles.title}>{venue?.name ?? 'Saha'}</Text>
+      <View style={styles.details}>
       <Text style={styles.meta}>Tarih: {new Date(m.startTime).toLocaleString()}</Text>
       <Text style={styles.meta}>Seviye: {m.levelMin} - {m.levelMax}</Text>
       <Text style={styles.meta}>Ücret: {m.feePerPlayer ?? 0}₺</Text>
+      </View>
       <Text style={[styles.status, m.status === 'OPEN' ? styles.open : styles.filled]}>
         Durum: {m.status}
       </Text>
@@ -104,22 +106,23 @@ export default function MatchDetail() {
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 16 },
   title: { fontSize: 22, fontWeight: '700' },
-  meta: { color: '#444', marginTop: 6 },
+  meta: { color: '#fff', marginTop: 6, fontSize:18, fontWeight: '700' },
   status: { marginTop: 6, alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, color: '#fff' },
-  open: { backgroundColor: '#3b82f6' },
-  filled: { backgroundColor: '#10b981' },
-  block: { marginTop: 16, backgroundColor: '#fff', borderRadius: 12, padding: 12, elevation: 2 },
-  blockTitle: { fontWeight: '700', marginBottom: 8 },
+  open: { backgroundColor: '#rgb(0, 255, 153)', fontSize:18, fontWeight:700, color:"#000", marginTop:10, marginBottom:3 },
+  filled: { backgroundColor: 'red', fontSize:18, fontWeight:700, color:"#fff", marginTop:10, marginBottom:3 },
+  block: { marginTop: 16, backgroundColor: '#788371', borderRadius: 12, padding: 12, elevation: 2, },
+  blockTitle: { fontWeight: '700', marginBottom: 8 , color:"#fff", fontSize:18 },
   row: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   posBtn: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10, backgroundColor: '#e6f0ff' },
   posText: { fontWeight: '600' },
   badge: { backgroundColor: '#e1ffe1', paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8 },
   faint: { color: '#777' },
   rosterItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: '#eee' },
-  rosterText: { fontWeight: '500' },
-  link: { color: '#2563eb' },
-  actions: { marginTop: 16 },
-  primary: { backgroundColor: '#111827', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
-  primaryText: { color: 'white', fontWeight: '700' },
+  rosterText: { fontWeight: '700', color:"#fff", fontSize:18 },
+  link: { color: '#859F3D', fontSize:18,fontWeight:"700", backgroundColor:"#fff",borderRadius:8, padding:4},
+  actions: { marginTop: 16, width:150, alignSelf:"center" },
+  primary: { backgroundColor: '#fff', paddingVertical: 12, borderRadius: 10, alignItems: 'center',borderWidth:2,borderColor:"black" },
+  primaryText: { color: '#859f3d', fontWeight: '700', fontSize:18 },
   secondary: { marginTop: 10, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: '#ccc' },
+  details:{marginRight:200 , backgroundColor:"#4B4D47" , borderRadius:12 , borderWidth:1, borderColor:"#000" , paddingLeft:10 , marginTop:15}
 });
