@@ -1,10 +1,11 @@
 // app/match/[id].tsx
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import RequestsModal from '../../../components/RequestModal';
 import { useAppStore } from '../../../src/context/AppStore';
 import type { Match, Position, RosterEntry } from '../../../src/types';
+import { MatchesApi } from '../../../src/services/matches';
+import RequestsModal from '../../../components/RequestModal';
 
 export default function MatchDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -12,15 +13,57 @@ export default function MatchDetail() {
   const { state, dispatch } = useAppStore();
   const router = useRouter();
 
-  const match = state.matches.find(m => m.id === matchId);
-  const venue = state.venues.find(v => v.id === match?.venueId);
+  // 1) Local/Remote state
+  const local = state.matches.find(m => m.id === matchId) ?? null;
+  const [remote, setRemote] = useState<Match | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reqsOpen, setReqsOpen] = useState<boolean>(false);
 
-  const [reqsOpen, setReqsOpen] = useState(false);
+  // 2) Fetch detail if not in store
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (local || !matchId) return;
+      try {
+        setLoading(true);
+        setLoadError(null);
+        const data = await MatchesApi.detail(matchId);
+        if (!cancelled) setRemote(data);
+      } catch (e: any) {
+        if (!cancelled) setLoadError(e?.message || 'Maç bilgisi alınamadı.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [local, matchId]);
 
-  if (!match) {
+  // 3) Kaynak: önce local, yoksa remote
+  const m: Match | null = local ?? remote;
+
+  // ⚠️ HOOK’LAR ERKEN RETURN’DEN ÖNCE: useMemo her zaman çağrılsın
+  const neededEntries = useMemo(() => {
+    const positions = m?.positionsNeeded ?? {};
+    return Object.entries(positions)
+      .filter(([_, n]) => (n ?? 0) > 0) as [Position, number][];
+  }, [m]);
+
+  // Loading (m henüz yokken)
+  if (!m && loading) {
     return (
       <View style={styles.center}>
-        <Text>Maç bulunamadı.</Text>
+        <ActivityIndicator />
+        <Text style={{ marginTop: 8 }}>Maç yükleniyor...</Text>
+      </View>
+    );
+  }
+
+  // Hata / bulunamadı
+  if (!m) {
+    return (
+      <View style={styles.center}>
+        <Text style={{ marginBottom: 8 }}>{loadError ?? 'Maç bulunamadı.'}</Text>
         <TouchableOpacity onPress={() => router.back()} style={styles.secondary}>
           <Text>Geri dön</Text>
         </TouchableOpacity>
@@ -28,25 +71,17 @@ export default function MatchDetail() {
     );
   }
 
-  // Guard SONRASI: non-null kopya
-  const m: Match = match;
+  // Buradan sonrası için m kesin var
+  const matchData: Match = m;
+  const venue = state.venues.find(v => v.id === matchData.venueId);
 
-  // --- UI guard bayrakları ---
   const currentUserId = state.currentUser?.id ?? 0;
-  const isOwner = currentUserId === m.ownerId;
-
+  const isOwner = currentUserId === matchData.ownerId;
   const myPending = state.requests.some(
-    r => r.matchId === m.id && r.requesterId === currentUserId && r.status === 'PENDING'
+    r => r.matchId === matchData.id && r.requesterId === currentUserId && r.status === 'PENDING'
   );
-  const myAccepted = m.roster.some(r => r.userId === currentUserId);
-
-  // Başvuru yapabilme koşulu
-  const canRequest = !isOwner && m.status === 'OPEN' && !myPending && !myAccepted;
-
-  const neededEntries = useMemo(() => {
-    return Object.entries(m.positionsNeeded)
-      .filter(([_, n]) => (n ?? 0) > 0) as [Position, number][];
-  }, [m.positionsNeeded]);
+  const myAccepted = matchData.roster.some(r => r.userId === currentUserId);
+  const canRequest = !isOwner && matchData.status === 'OPEN' && !myPending && !myAccepted;
 
   function sendRequest(position: Position) {
     if (!canRequest) {
@@ -56,13 +91,14 @@ export default function MatchDetail() {
         ? 'Zaten kadrodasın.'
         : myPending
         ? 'Zaten bekleyen bir başvurun var.'
-        : m.status !== 'OPEN'
+        : matchData.status !== 'OPEN'
         ? 'Maç açık değil.'
         : 'Başvuru koşulları sağlanmıyor.'
       );
       return;
     }
-    dispatch({ type: 'SEND_JOIN_REQUEST', matchId: m.id, position });
+    // TODO: gerçek API isteği; şu an store aksiyonu
+    dispatch({ type: 'SEND_JOIN_REQUEST', matchId: matchData.id, position });
     Alert.alert('İstek gönderildi', `${position} için başvurun iletildi.`);
   }
 
@@ -75,13 +111,13 @@ export default function MatchDetail() {
       <Text style={styles.title}>{venue?.name ?? 'Saha'}</Text>
 
       <View style={styles.details}>
-        <Text style={styles.meta}>Tarih: {new Date(m.startTime).toLocaleString()}</Text>
-        <Text style={styles.meta}>Seviye: {m.levelMin} - {m.levelMax}</Text>
-        <Text style={styles.meta}>Ücret: {m.feePerPlayer ?? 0}₺</Text>
+        <Text style={styles.meta}>Tarih: {new Date(matchData.startTime).toLocaleString()}</Text>
+        <Text style={styles.meta}>Seviye: {matchData.levelMin} - {matchData.levelMax}</Text>
+        <Text style={styles.meta}>Ücret: {matchData.feePerPlayer ?? 0}₺</Text>
       </View>
 
-      <Text style={[styles.status, m.status === 'OPEN' ? styles.open : styles.filled]}>
-        Durum: {m.status}
+      <Text style={[styles.status, matchData.status === 'OPEN' ? styles.open : styles.filled]}>
+        Durum: {matchData.status}
       </Text>
 
       <View style={styles.block}>
@@ -90,7 +126,7 @@ export default function MatchDetail() {
           {neededEntries.length === 0 ? (
             <Text style={styles.badge}>Kadro tamam 🎉</Text>
           ) : neededEntries.map(([pos, count]) => {
-              const disabled = !canRequest || (m.positionsNeeded[pos] ?? 0) <= 0;
+              const disabled = !canRequest || (matchData.positionsNeeded[pos] ?? 0) <= 0;
               return (
                 <TouchableOpacity
                   key={pos}
@@ -105,7 +141,6 @@ export default function MatchDetail() {
           }
         </View>
 
-        {/* Başvuru durumu bilgilendirmesi */}
         {!isOwner && (
           <View style={{ marginTop: 8 }}>
             {myAccepted && <Text style={{ color: '#fff' }}>Kadrodasın ✅</Text>}
@@ -117,9 +152,9 @@ export default function MatchDetail() {
 
       <View style={styles.block}>
         <Text style={styles.blockTitle}>Kadro</Text>
-        {m.roster.length === 0 ? (
+        {matchData.roster.length === 0 ? (
           <Text style={styles.faint}>Henüz katılan yok.</Text>
-        ) : m.roster.map((r: RosterEntry, i) => (
+        ) : matchData.roster.map((r: RosterEntry, i) => (
           <View key={`${r.userId}-${i}`} style={styles.rosterItem}>
             <Text style={styles.rosterText}>
               #{r.userId} • {r.position} • {new Date(r.joinedAt).toLocaleTimeString()}
@@ -141,7 +176,7 @@ export default function MatchDetail() {
         </View>
       )}
 
-      <RequestsModal visible={reqsOpen} onClose={() => setReqsOpen(false)} matchId={m.id} />
+      <RequestsModal visible={reqsOpen} onClose={() => setReqsOpen(false)} matchId={matchData.id} />
     </ScrollView>
   );
 }
