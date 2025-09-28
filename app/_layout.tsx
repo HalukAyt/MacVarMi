@@ -1,11 +1,12 @@
 // app/_layout.tsx
-import { Slot } from "expo-router";
+import { Stack } from "expo-router";
+import React from "react";
 import { AppStoreProvider } from "../src/context/AppStore";
 
 export default function RootLayout() {
   return (
     <AppStoreProvider>
-      <Slot />
+      <Stack screenOptions={{ headerShown: false }} />
     </AppStoreProvider>
   );
 }

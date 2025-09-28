@@ -1,9 +1,8 @@
-// app/match/[id].tsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAppStore } from '../../../src/context/AppStore';
-import type { Match, Position, RosterEntry } from '../../../src/types';
+import type { Match, Position, RosterEntry, Venue } from '../../../src/types'; // Venue ekle
 import { MatchesApi } from '../../../src/services/matches';
 import RequestsModal from '../../../components/RequestModal';
 
@@ -14,17 +13,17 @@ export default function MatchDetail() {
   const router = useRouter();
 
   // 1) Local/Remote state
-  const local = state.matches.find(m => m.id === matchId) ?? null;
+  const local: Match | null = state.matches.find((m: Match) => m.id === matchId) ?? null; // <- tip ver
   const [remote, setRemote] = useState<Match | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reqsOpen, setReqsOpen] = useState<boolean>(false);
 
-  // 2) Fetch detail if not in store
+  // 2) Detayı her zaman çek (matchId varsa)
   useEffect(() => {
     let cancelled = false;
     (async () => {
-   if (!matchId) return; // local olsa da remote detay çek
+      if (!matchId) return;
       try {
         setLoading(true);
         setLoadError(null);
@@ -37,20 +36,18 @@ export default function MatchDetail() {
       }
     })();
     return () => { cancelled = true; };
-  }, [local, matchId]);
+  }, [matchId]);
 
-  // 3) Kaynak: önce local, yoksa remote
-const m: Match | null = remote ?? local; // detay gelmişse onu kullan
+  // 3) Kaynak: önce remote, yoksa local
+  const m: Match | null = remote ?? local;
 
-
-  // useMemo hook'u her render'da aynı sırada çalışsın (erken return'den önce)
+  // Eksik pozisyonlar
   const neededEntries = useMemo(() => {
     const positions = m?.positionsNeeded ?? {};
     return Object.entries(positions)
       .filter(([_, n]) => (n ?? 0) > 0) as [Position, number][];
   }, [m]);
 
-  // Loading (m henüz yokken)
   if (!m && loading) {
     return (
       <View style={styles.center}>
@@ -60,7 +57,6 @@ const m: Match | null = remote ?? local; // detay gelmişse onu kullan
     );
   }
 
-  // Hata / bulunamadı
   if (!m) {
     return (
       <View style={styles.center}>
@@ -72,26 +68,19 @@ const m: Match | null = remote ?? local; // detay gelmişse onu kullan
     );
   }
 
-  // Buradan sonrası için m kesin var
   const matchData: Match = m;
-  const venue = state.venues.find(v => v.id === matchData.venueId);
+  const venue: Venue | undefined = state.venues.find((v: Venue) => v.id === matchData.venueId); // <- tip ver
 
-  // --- FIX: userId nullable, 0 yok ---
   const currentUserId: number | null = state.currentUser?.id ?? null;
-const isOwner =
-  currentUserId != null &&
-  matchData.ownerId != null &&
-  Number(currentUserId) === Number(matchData.ownerId);
+  const isOwner = currentUserId != null && matchData.ownerId != null && Number(currentUserId) === Number(matchData.ownerId);
 
   const myPending =
     currentUserId != null &&
-    state.requests.some(
-      r => r.matchId === matchData.id && r.requesterId === currentUserId && r.status === 'PENDING'
-    );
+    state.requests.some((r: any) => r.matchId === matchData.id && r.requesterId === currentUserId && r.status === 'PENDING');
 
   const myAccepted =
     currentUserId != null &&
-    matchData.roster.some(r => r.userId === currentUserId);
+    matchData.roster.some((r: RosterEntry) => r.userId === currentUserId); // <- tip ver
 
   const canRequest =
     currentUserId != null &&
@@ -101,6 +90,7 @@ const isOwner =
     !myAccepted;
 
   async function sendRequest(position: Position) {
+    // butonlar yalnızca kontenjan sıfırsa disabled; kalan kuralları burada uyaralım
     if (!canRequest) {
       Alert.alert(
         'Başvuru yapılamaz',
@@ -120,11 +110,11 @@ const isOwner =
     }
 
     try {
-  const normalized = position.toUpperCase() as Position; // 'GK' | 'DEF' | 'MID' | 'FWD'
-await MatchesApi.sendRequest(matchData.id, { position: normalized });
-dispatch({ type: 'SEND_JOIN_REQUEST', matchId: matchData.id, position: normalized }); // store ile tutarlı
-  Alert.alert('İstek gönderildi', `${normalized} için başvurun iletildi.`);
-} catch (e: any) {
+      const normalized = position.toUpperCase() as Position;
+      await MatchesApi.sendRequest(matchData.id, { position: normalized });
+      dispatch({ type: 'SEND_JOIN_REQUEST', matchId: matchData.id, position: normalized });
+      Alert.alert('İstek gönderildi', `${normalized} için başvurun iletildi.`);
+    } catch (e: any) {
       const msg =
         e?.response?.data?.message ??
         e?.response?.data ??
@@ -132,10 +122,6 @@ dispatch({ type: 'SEND_JOIN_REQUEST', matchId: matchData.id, position: normalize
         'Başvuru sırasında bir hata oluştu.';
       Alert.alert('Başarısız', String(msg));
     }
-  }
-
-  function openChatWith(userId: number) {
-    Alert.alert('Sohbet', `Kullanıcı #${userId} ile sohbet başlatılacak (SignalR eklenecek).`);
   }
 
   return (
@@ -158,12 +144,11 @@ dispatch({ type: 'SEND_JOIN_REQUEST', matchId: matchData.id, position: normalize
           {neededEntries.length === 0 ? (
             <Text style={styles.badge}>Kadro tamam 🎉</Text>
           ) : neededEntries.map(([pos, count]) => {
-              // Sadece o pozisyon kontenjanı yoksa disable et
-const disabled = (matchData.positionsNeeded[pos] ?? 0) <= 0;
-
+              const disabled = (matchData.positionsNeeded[pos] ?? 0) <= 0; // sadece kontenjan yoksa disable
               return (
                 <TouchableOpacity
                   key={pos}
+                  activeOpacity={0.7}
                   style={[styles.posBtn, disabled && { opacity: 0.5 }]}
                   onPress={() => !disabled && sendRequest(pos)}
                   disabled={disabled}
@@ -175,17 +160,9 @@ const disabled = (matchData.positionsNeeded[pos] ?? 0) <= 0;
           }
         </View>
 
-        {!isOwner && (
-          <View style={{ marginTop: 8 }}>
-            {myAccepted && <Text style={{ color: '#fff' }}>Kadrodasın ✅</Text>}
-            {!myAccepted && myPending && <Text style={{ color: '#fff' }}>Başvurun beklemede ⏳</Text>}
-            {!myAccepted && !myPending && !canRequest && <Text style={{ color: '#fff' }}>Başvuru yapılamıyor</Text>}
-          </View>
-        )}
-
-        {/* Debug için aç/kapat (gerekirse görünür yap) */}
+        {/* Debug: geçici görünür tut */}
         {/* <Text style={{color:'#fff', marginTop:8}}>
-          dbg: uid={String(currentUserId)} isOwner={String(isOwner)} pending={String(myPending)} accepted={String(myAccepted)} canReq={String(canRequest)}
+          uid={String(currentUserId)} ownerId={String(matchData.ownerId)} status={matchData.status}
         </Text> */}
       </View>
 
@@ -193,16 +170,11 @@ const disabled = (matchData.positionsNeeded[pos] ?? 0) <= 0;
         <Text style={styles.blockTitle}>Kadro</Text>
         {matchData.roster.length === 0 ? (
           <Text style={styles.faint}>Henüz katılan yok.</Text>
-        ) : matchData.roster.map((r: RosterEntry, i) => (
+        ) : matchData.roster.map((r: RosterEntry, i: number) => (
           <View key={`${r.userId}-${i}`} style={styles.rosterItem}>
             <Text style={styles.rosterText}>
               #{r.userId} • {r.position} • {new Date(r.joinedAt).toLocaleTimeString()}
             </Text>
-            {isOwner && (
-              <TouchableOpacity onPress={() => openChatWith(r.userId)}>
-                <Text style={styles.link}>Sohbet</Text>
-              </TouchableOpacity>
-            )}
           </View>
         ))}
       </View>
@@ -212,9 +184,6 @@ const disabled = (matchData.positionsNeeded[pos] ?? 0) <= 0;
           <TouchableOpacity style={styles.primary} onPress={() => setReqsOpen(true)}>
             <Text style={styles.primaryText}>Bekleyen İstekler</Text>
           </TouchableOpacity>
-          <Text style={{color:'black', marginTop:8}}>
-  uid={String(currentUserId)} ownerId={String(matchData.ownerId)} status={matchData.status}
-</Text>
         </View>
       )}
 

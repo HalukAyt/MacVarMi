@@ -1,14 +1,16 @@
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Alert, Button, TextInput, View } from "react-native";
-import { setToken } from "../../src/services/api";
 import { AuthApi } from "../../src/services/auth";
+import { useAppStore } from "../../src/context/AppStore";
+import { getUserIdFromToken } from "../../src/utils/auth";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { dispatch } = useAppStore();
 
   async function onLogin() {
     if (!email || !password) {
@@ -17,16 +19,24 @@ export default function Login() {
     }
     try {
       setLoading(true);
-      const res = await AuthApi.login(email, password);
-      await setToken(res.token);
-router.replace("/(tabs)/matches");
+      const res = await AuthApi.login(email, password);     // token AsyncStorage’a yazıldı
+      if (!res?.token) throw new Error("Token alınamadı.");
+
+      // 🔑 token’dan userId al ve store’a yaz
+      const uid = res.userId ?? getUserIdFromToken(res.token);
+      if (!uid) throw new Error("Kullanıcı kimliği çözümlenemedi.");
+
+      dispatch({
+        type: "AUTH_SET",
+        token: res.token,
+        currentUser: { id: uid, name: res.name, email: res.email },
+      });
+      // önceki kullanıcının verileri kalmasın
+      dispatch({ type: "CLEAR_DOMAIN" });
+
+      router.replace("/(tabs)/matches");
     } catch (e: any) {
-      // Hata mesajını olabildiğince anlamlı göster
-      const body = e?.body;
-      const msg =
-        typeof body === "string"
-          ? body
-          : body?.message || e?.message || "Giriş başarısız";
+      const msg = e?.message || "Giriş başarısız";
       Alert.alert("Giriş başarısız", msg);
     } finally {
       setLoading(false);
@@ -34,7 +44,7 @@ router.replace("/(tabs)/matches");
   }
 
   return (
-    <View style={{ padding: 16, gap: 12 , marginTop:50}}>
+    <View style={{ padding: 16, gap: 12, marginTop: 50 }}>
       <TextInput
         placeholder="Email"
         value={email}
