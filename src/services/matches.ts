@@ -17,8 +17,10 @@ export const MatchesApi = {
   detail: (id: number): Promise<Match> => api.get(`/api/Matches/${id}`),
   create: (data: any) => api.post("/api/Matches", data),
   cancel: (id: number) => api.post(`/api/Matches/${id}/cancel`),
-  sendRequest: (id: number, position: string) =>
-    api.post(`/api/Matches/${id}/requests`, { position }),
+
+  // 🔧 Değişiklik: ikinci parametre artık body -> { position: Position }
+  sendRequest: (id: number, body: { position: Position }) =>
+    api.post(`/api/Matches/${id}/requests`, body),
 };
 
 export const RequestsApi = {

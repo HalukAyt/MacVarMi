@@ -24,7 +24,7 @@ export default function MatchDetail() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      if (local || !matchId) return;
+   if (!matchId) return; // local olsa da remote detay çek
       try {
         setLoading(true);
         setLoadError(null);
@@ -40,9 +40,10 @@ export default function MatchDetail() {
   }, [local, matchId]);
 
   // 3) Kaynak: önce local, yoksa remote
-  const m: Match | null = local ?? remote;
+const m: Match | null = remote ?? local; // detay gelmişse onu kullan
 
-  // ⚠️ HOOK’LAR ERKEN RETURN’DEN ÖNCE: useMemo her zaman çağrılsın
+
+  // useMemo hook'u her render'da aynı sırada çalışsın (erken return'den önce)
   const neededEntries = useMemo(() => {
     const positions = m?.positionsNeeded ?? {};
     return Object.entries(positions)
@@ -75,31 +76,62 @@ export default function MatchDetail() {
   const matchData: Match = m;
   const venue = state.venues.find(v => v.id === matchData.venueId);
 
-  const currentUserId = state.currentUser?.id ?? 0;
-  const isOwner = currentUserId === matchData.ownerId;
-  const myPending = state.requests.some(
-    r => r.matchId === matchData.id && r.requesterId === currentUserId && r.status === 'PENDING'
-  );
-  const myAccepted = matchData.roster.some(r => r.userId === currentUserId);
-  const canRequest = !isOwner && matchData.status === 'OPEN' && !myPending && !myAccepted;
+  // --- FIX: userId nullable, 0 yok ---
+  const currentUserId: number | null = state.currentUser?.id ?? null;
+const isOwner =
+  currentUserId != null &&
+  matchData.ownerId != null &&
+  Number(currentUserId) === Number(matchData.ownerId);
 
-  function sendRequest(position: Position) {
+  const myPending =
+    currentUserId != null &&
+    state.requests.some(
+      r => r.matchId === matchData.id && r.requesterId === currentUserId && r.status === 'PENDING'
+    );
+
+  const myAccepted =
+    currentUserId != null &&
+    matchData.roster.some(r => r.userId === currentUserId);
+
+  const canRequest =
+    currentUserId != null &&
+    !isOwner &&
+    matchData.status === 'OPEN' &&
+    !myPending &&
+    !myAccepted;
+
+  async function sendRequest(position: Position) {
     if (!canRequest) {
-      Alert.alert('Başvuru yapılamaz', isOwner
-        ? 'Maç sahibi kendi maçına başvuramaz.'
-        : myAccepted
-        ? 'Zaten kadrodasın.'
-        : myPending
-        ? 'Zaten bekleyen bir başvurun var.'
-        : matchData.status !== 'OPEN'
-        ? 'Maç açık değil.'
-        : 'Başvuru koşulları sağlanmıyor.'
+      Alert.alert(
+        'Başvuru yapılamaz',
+        isOwner
+          ? 'Maç sahibi kendi maçına başvuramaz.'
+          : myAccepted
+          ? 'Zaten kadrodasın.'
+          : myPending
+          ? 'Zaten bekleyen bir başvurun var.'
+          : matchData.status !== 'OPEN'
+          ? 'Maç açık değil.'
+          : currentUserId == null
+          ? 'Oturum bulunamadı.'
+          : 'Başvuru koşulları sağlanmıyor.'
       );
       return;
     }
-    // TODO: gerçek API isteği; şu an store aksiyonu
-    dispatch({ type: 'SEND_JOIN_REQUEST', matchId: matchData.id, position });
-    Alert.alert('İstek gönderildi', `${position} için başvurun iletildi.`);
+
+    try {
+  const normalized = position.toUpperCase() as Position; // 'GK' | 'DEF' | 'MID' | 'FWD'
+await MatchesApi.sendRequest(matchData.id, { position: normalized });
+dispatch({ type: 'SEND_JOIN_REQUEST', matchId: matchData.id, position: normalized }); // store ile tutarlı
+  Alert.alert('İstek gönderildi', `${normalized} için başvurun iletildi.`);
+} catch (e: any) {
+      const msg =
+        e?.response?.data?.message ??
+        e?.response?.data ??
+        e?.message ??
+        'Başvuru sırasında bir hata oluştu.';
+      Alert.alert('Başarısız', String(msg));
+    }
   }
 
   function openChatWith(userId: number) {
@@ -126,7 +158,9 @@ export default function MatchDetail() {
           {neededEntries.length === 0 ? (
             <Text style={styles.badge}>Kadro tamam 🎉</Text>
           ) : neededEntries.map(([pos, count]) => {
-              const disabled = !canRequest || (matchData.positionsNeeded[pos] ?? 0) <= 0;
+              // Sadece o pozisyon kontenjanı yoksa disable et
+const disabled = (matchData.positionsNeeded[pos] ?? 0) <= 0;
+
               return (
                 <TouchableOpacity
                   key={pos}
@@ -148,6 +182,11 @@ export default function MatchDetail() {
             {!myAccepted && !myPending && !canRequest && <Text style={{ color: '#fff' }}>Başvuru yapılamıyor</Text>}
           </View>
         )}
+
+        {/* Debug için aç/kapat (gerekirse görünür yap) */}
+        {/* <Text style={{color:'#fff', marginTop:8}}>
+          dbg: uid={String(currentUserId)} isOwner={String(isOwner)} pending={String(myPending)} accepted={String(myAccepted)} canReq={String(canRequest)}
+        </Text> */}
       </View>
 
       <View style={styles.block}>
@@ -173,6 +212,9 @@ export default function MatchDetail() {
           <TouchableOpacity style={styles.primary} onPress={() => setReqsOpen(true)}>
             <Text style={styles.primaryText}>Bekleyen İstekler</Text>
           </TouchableOpacity>
+          <Text style={{color:'black', marginTop:8}}>
+  uid={String(currentUserId)} ownerId={String(matchData.ownerId)} status={matchData.status}
+</Text>
         </View>
       )}
 
