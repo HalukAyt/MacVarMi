@@ -1,13 +1,7 @@
 // src/services/api.ts
-import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const LOCAL_PORT = 5136;
-export const API_URL = Platform.select({
-  android: `http://10.0.2.2:${LOCAL_PORT}`,
-  ios: `http://localhost:${LOCAL_PORT}`,
-  default: `http://10.0.2.2:${LOCAL_PORT}`,
-}) as string;
+export const API_URL = "https://macvarmiapi.onrender.com";
 
 let memToken: string | null = null;
 
