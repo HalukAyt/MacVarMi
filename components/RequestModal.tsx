@@ -1,81 +1,98 @@
-// components/RequestsModal.tsx
-import React, { useMemo } from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
-import { useAppStore } from '../src/context/AppStore';
-import type { JoinRequest } from '../src/types';
+import React, { useEffect, useState } from "react";
+import { Modal, View, Text, TouchableOpacity, ActivityIndicator, Alert, FlatList } from "react-native";
+import { RequestsApi } from "@/src/services/requests";
+import type { JoinRequest } from "@/src/types";
 
 type Props = {
   visible: boolean;
   onClose: () => void;
   matchId: number;
+  onChanged?: () => void;     // 👈 eklendi
 };
 
-export default function RequestsModal({ visible, onClose, matchId }: Props) {
-  const { state, dispatch } = useAppStore();
+export default function RequestsModal({ visible, onClose, matchId, onChanged }: Props) {
+  const [loading, setLoading] = useState(false);
+  const [items, setItems] = useState<JoinRequest[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  const pending = useMemo(
-    () => state.requests.filter(r => r.matchId === matchId && r.status === 'PENDING'),
-    [state.requests, matchId]
-  );
-
-  function accept(id: number) {
-    dispatch({ type: 'ACCEPT_REQUEST', requestId: id });
+  async function load() {
+    try {
+      setLoading(true);
+      setError(null);
+      const list: JoinRequest[] = await RequestsApi.listForMatch(matchId);
+      setItems(list);
+    } catch (e: any) {
+      setError(e?.message || "Bekleyen istekler alınamadı.");
+    } finally {
+      setLoading(false);
+    }
   }
-  function reject(id: number) {
-    dispatch({ type: 'REJECT_REQUEST', requestId: id });
+
+  useEffect(() => { if (visible) load(); }, [visible, matchId]);
+
+  async function accept(id: number) {
+    try {
+      await RequestsApi.accept(id);
+      await load();
+      onChanged?.();                 // 👈 kabul sonrası parent’a haber ver
+      Alert.alert("Onaylandı", "İstek kabul edildi.");
+    } catch (e: any) {
+      Alert.alert("Hata", e?.message || "İstek kabul edilemedi.");
+    }
+  }
+
+  async function reject(id: number) {
+    try {
+      await RequestsApi.reject(id);
+      await load();
+      onChanged?.();                 // 👈 ret sonrası da
+      Alert.alert("Reddedildi", "İstek reddedildi.");
+    } catch (e: any) {
+      Alert.alert("Hata", e?.message || "İstek reddedilemedi.");
+    }
   }
 
   const renderItem = ({ item }: { item: JoinRequest }) => (
-    <View style={styles.reqRow}>
-      <Text style={styles.reqText}>@{item.requesterId} • {item.position}</Text>
-      <View style={styles.row}>
-        <TouchableOpacity style={[styles.btn, styles.ok]} onPress={() => accept(item.id)}>
-          <Text style={styles.btnText}>Kabul</Text>
+    <View style={{ paddingVertical: 10, borderBottomWidth: 0.5, borderColor: "#e5e5e5" }}>
+      <Text style={{ fontWeight: "600" }}>
+        İstek #{item.id} • Kullanıcı: {item.requesterId} • Pozisyon: {item.position}
+      </Text>
+      <View style={{ flexDirection: "row", gap: 10, marginTop: 8 }}>
+        <TouchableOpacity onPress={() => accept(item.id)} style={{ paddingVertical: 8, paddingHorizontal: 12, backgroundColor: "#e1ffe1", borderRadius: 8 }}>
+          <Text>Kabul</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.btn, styles.deny]} onPress={() => reject(item.id)}>
-          <Text style={styles.btnText}>Reddet</Text>
+        <TouchableOpacity onPress={() => reject(item.id)} style={{ paddingVertical: 8, paddingHorizontal: 12, backgroundColor: "#ffe1e1", borderRadius: 8 }}>
+          <Text>Reddet</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 
   return (
-    <Modal visible={visible} onRequestClose={onClose} transparent animationType="slide">
-      <View style={styles.backdrop}>
-        <View style={styles.sheet}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Bekleyen İstekler</Text>
-            <TouchableOpacity onPress={onClose}><Text style={styles.close}>Kapat</Text></TouchableOpacity>
-          </View>
+    <Modal visible={visible} animationType="slide" onRequestClose={onClose} transparent>
+      <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "center", padding: 16 }}>
+        <View style={{ backgroundColor: "#fff", borderRadius: 12, padding: 16, maxHeight: "80%" }}>
+          <Text style={{ fontSize: 18, fontWeight: "700", marginBottom: 12 }}>Bekleyen İstekler</Text>
 
-          {pending.length === 0 ? (
-            <Text style={{ textAlign: 'center', color: '#666', marginTop: 24 }}>Bekleyen istek yok.</Text>
+          {loading && <ActivityIndicator />}
+          {error && <Text style={{ color: "red", marginBottom: 8 }}>{error}</Text>}
+
+          {!loading && !error && items.length === 0 ? (
+            <Text>Bekleyen istek yok.</Text>
           ) : (
             <FlatList
-              data={pending}
-              keyExtractor={(r) => String(r.id)}
+              data={items}
+              keyExtractor={(x) => String(x.id)}
               renderItem={renderItem}
-              ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
-              contentContainerStyle={{ paddingVertical: 8 }}
+              style={{ minWidth: 260 }}
             />
           )}
+
+          <TouchableOpacity onPress={onClose} style={{ marginTop: 12, alignSelf: "flex-end" }}>
+            <Text style={{ color: "#007aff" }}>Kapat</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: 'white', borderTopLeftRadius: 16, borderTopRightRadius: 16, padding: 16, maxHeight: '80%' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  title: { fontSize: 18, fontWeight: '700' },
-  close: { color: '#2563eb' },
-  reqRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
-  reqText: { fontWeight: '600' },
-  row: { flexDirection: 'row', gap: 8 },
-  btn: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8 },
-  ok: { backgroundColor: '#10b981' },
-  deny: { backgroundColor: '#ef4444' },
-  btnText: { color: 'white', fontWeight: '700' },
-});
