@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAppStore } from '../../../src/context/AppStore';
-import type { Match, Position, RosterEntry, Venue } from '../../../src/types'; // Venue ekle
+import type { Match, Position, RosterEntry, Venue } from '../../../src/types';
 import { MatchesApi } from '../../../src/services/matches';
 import RequestsModal from '../../../components/RequestModal';
 
@@ -13,13 +13,22 @@ export default function MatchDetail() {
   const router = useRouter();
 
   // 1) Local/Remote state
-  const local: Match | null = state.matches.find((m: Match) => m.id === matchId) ?? null; // <- tip ver
+  const local: Match | null = state.matches.find((m: Match) => m.id === matchId) ?? null;
   const [remote, setRemote] = useState<Match | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reqsOpen, setReqsOpen] = useState<boolean>(false);
 
-  // 2) Detayı her zaman çek (matchId varsa)
+  // ✅ Tek yerden fetch
+  async function reload() {
+    if (!matchId) return;
+    try {
+      const fresh = await MatchesApi.detail(matchId); // backend Get(id) -> Include(Roster, PositionsNeeded)
+      setRemote(fresh);                               // ekran anında güncellenir
+    } catch {}
+  }
+
+  // 2) Sayfa açılınca çek
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -37,6 +46,11 @@ export default function MatchDetail() {
     })();
     return () => { cancelled = true; };
   }, [matchId]);
+
+  // ✅ Modal kapandığında da tazele (kabul/ret sonrası)
+  useEffect(() => {
+    if (!reqsOpen) reload();
+  }, [reqsOpen]);
 
   // 3) Kaynak: önce remote, yoksa local
   const m: Match | null = remote ?? local;
@@ -69,7 +83,7 @@ export default function MatchDetail() {
   }
 
   const matchData: Match = m;
-  const venue: Venue | undefined = state.venues.find((v: Venue) => v.id === matchData.venueId); // <- tip ver
+  const venue: Venue | undefined = state.venues.find((v: Venue) => v.id === matchData.venueId);
 
   const currentUserId: number | null = state.currentUser?.id ?? null;
   const isOwner = currentUserId != null && matchData.ownerId != null && Number(currentUserId) === Number(matchData.ownerId);
@@ -80,7 +94,7 @@ export default function MatchDetail() {
 
   const myAccepted =
     currentUserId != null &&
-    matchData.roster.some((r: RosterEntry) => r.userId === currentUserId); // <- tip ver
+    matchData.roster.some((r: RosterEntry) => r.userId === currentUserId);
 
   const canRequest =
     currentUserId != null &&
@@ -90,7 +104,6 @@ export default function MatchDetail() {
     !myAccepted;
 
   async function sendRequest(position: Position) {
-    // butonlar yalnızca kontenjan sıfırsa disabled; kalan kuralları burada uyaralım
     if (!canRequest) {
       Alert.alert(
         'Başvuru yapılamaz',
@@ -114,6 +127,8 @@ export default function MatchDetail() {
       await MatchesApi.sendRequest(matchData.id, { position: normalized });
       dispatch({ type: 'SEND_JOIN_REQUEST', matchId: matchData.id, position: normalized });
       Alert.alert('İstek gönderildi', `${normalized} için başvurun iletildi.`);
+      // kendi başvurun sonrası istersen:
+      await reload();
     } catch (e: any) {
       const msg =
         e?.response?.data?.message ??
@@ -144,7 +159,7 @@ export default function MatchDetail() {
           {neededEntries.length === 0 ? (
             <Text style={styles.badge}>Kadro tamam 🎉</Text>
           ) : neededEntries.map(([pos, count]) => {
-              const disabled = (matchData.positionsNeeded[pos] ?? 0) <= 0; // sadece kontenjan yoksa disable
+              const disabled = (matchData.positionsNeeded[pos] ?? 0) <= 0;
               return (
                 <TouchableOpacity
                   key={pos}
@@ -159,11 +174,6 @@ export default function MatchDetail() {
             })
           }
         </View>
-
-        {/* Debug: geçici görünür tut */}
-        {/* <Text style={{color:'#fff', marginTop:8}}>
-          uid={String(currentUserId)} ownerId={String(matchData.ownerId)} status={matchData.status}
-        </Text> */}
       </View>
 
       <View style={styles.block}>
@@ -187,7 +197,12 @@ export default function MatchDetail() {
         </View>
       )}
 
-      <RequestsModal visible={reqsOpen} onClose={() => setReqsOpen(false)} matchId={matchData.id} />
+      <RequestsModal
+        visible={reqsOpen}
+        onClose={() => setReqsOpen(false)}
+        matchId={matchData.id}
+        onChanged={reload}   // ✅ kabul/ret sonrası hemen güncelle
+      />
     </ScrollView>
   );
 }
@@ -208,7 +223,7 @@ const styles = StyleSheet.create({
   faint: { color: '#ddd' },
   rosterItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: '#eee' },
   rosterText: { fontWeight: '700', color: '#fff', fontSize: 18 },
-  link: { color: '#859F3D', fontSize: 18, fontWeight: '700', backgroundColor: '#fff', borderRadius: 8, padding: 4 },
+  link: { color: '#859F3D', fontSize: 18, fontWeight: '700', backgroundColor: '#fff', borderRadius: 8 },
   actions: { marginTop: 16, width: 180, alignSelf: 'center' },
   primary: { backgroundColor: '#fff', paddingVertical: 12, borderRadius: 10, alignItems: 'center', borderWidth: 2, borderColor: 'black' },
   primaryText: { color: '#859f3d', fontWeight: '700', fontSize: 18 },

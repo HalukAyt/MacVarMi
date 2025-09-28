@@ -7,7 +7,7 @@ type Props = {
   visible: boolean;
   onClose: () => void;
   matchId: number;
-  onChanged?: () => void; // 👈 YENİ
+  onChanged?: () => void; // ✅ parent’a değişikliği bildirmek için
 };
 
 export default function RequestsModal({ visible, onClose, matchId, onChanged }: Props) {
@@ -36,7 +36,7 @@ export default function RequestsModal({ visible, onClose, matchId, onChanged }: 
     try {
       await RequestsApi.accept(id);
       await load();          // modal listesini tazele
-      onChanged?.();         // 👈 parent’a “değişti” de
+      onChanged?.();         // ✅ MatchDetail.reload() çağırılsın
       Alert.alert("Onaylandı", "İstek kabul edildi.");
     } catch (e: any) {
       Alert.alert("Hata", e?.message || "İstek kabul edilemedi.");
@@ -47,7 +47,7 @@ export default function RequestsModal({ visible, onClose, matchId, onChanged }: 
     try {
       await RequestsApi.reject(id);
       await load();
-      onChanged?.();         // 👈 parent’a “değişti” de
+      onChanged?.();         // ✅ MatchDetail.reload() çağırılsın
       Alert.alert("Reddedildi", "İstek reddedildi.");
     } catch (e: any) {
       Alert.alert("Hata", e?.message || "İstek reddedilemedi.");
@@ -98,3 +98,4 @@ export default function RequestsModal({ visible, onClose, matchId, onChanged }: 
     </Modal>
   );
 }
+  
