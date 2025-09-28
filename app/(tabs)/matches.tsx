@@ -1,18 +1,43 @@
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useRouter, useFocusEffect } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
+import { FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { MatchesApi, type MatchListItem } from "../../src/services/matches";
 
 export default function Matches() {
   const router = useRouter();
   const [items, setItems] = useState<MatchListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    MatchesApi.list()
-      .then(setItems)
-      .finally(() => setLoading(false));
+  const fetchList = useCallback(async () => {
+    try {
+      const data = await MatchesApi.list();
+      setItems(data);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  // İlk açılışta
+  useEffect(() => {
+    fetchList();
+  }, [fetchList]);
+
+  // Ekran odağa geldiğinde her seferinde yenile
+  useFocusEffect(
+    useCallback(() => {
+      fetchList();
+    }, [fetchList])
+  );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await fetchList();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchList]);
 
   if (loading) return <Text>Yükleniyor...</Text>;
 
@@ -38,10 +63,14 @@ export default function Matches() {
           </TouchableOpacity>
         )}
         ListEmptyComponent={
-          <View style={{justifyContent: "center", alignItems: "center", marginTop: 100}}>
-          <Text>Açık maç yok.</Text>
+          <View style={{ justifyContent: "center", alignItems: "center", marginTop: 100 }}>
+            <Text>Açık maç yok.</Text>
           </View>
-      }
+        }
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
       />
     </View>
   );
@@ -50,5 +79,5 @@ export default function Matches() {
 const styles = StyleSheet.create({
   card: { backgroundColor: "white", padding: 12, borderRadius: 8, marginVertical: 6 },
   title: { fontWeight: "700", fontSize: 16 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 16 },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", width: "100%" },
 });

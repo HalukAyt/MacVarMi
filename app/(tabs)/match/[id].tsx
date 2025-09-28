@@ -1,3 +1,4 @@
+// app/match/[id].tsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -19,7 +20,7 @@ export default function MatchDetail() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reqsOpen, setReqsOpen] = useState<boolean>(false);
 
-  // ✅ Tek yerden fetch
+  // Tek yerden fetch
   async function reload() {
     if (!matchId) return;
     try {
@@ -28,7 +29,7 @@ export default function MatchDetail() {
     } catch {}
   }
 
-  // 2) Sayfa açılınca çek
+  // Sayfa açılışında çek
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -47,10 +48,8 @@ export default function MatchDetail() {
     return () => { cancelled = true; };
   }, [matchId]);
 
-  // ✅ Modal kapandığında da tazele (kabul/ret sonrası)
-  useEffect(() => {
-    if (!reqsOpen) reload();
-  }, [reqsOpen]);
+  // Modal kapandığında tazele (kabul/ret sonrası)
+  useEffect(() => { if (!reqsOpen) reload(); }, [reqsOpen]);
 
   // 3) Kaynak: önce remote, yoksa local
   const m: Match | null = remote ?? local;
@@ -62,6 +61,7 @@ export default function MatchDetail() {
       .filter(([_, n]) => (n ?? 0) > 0) as [Position, number][];
   }, [m]);
 
+  // Loading
   if (!m && loading) {
     return (
       <View style={styles.center}>
@@ -71,6 +71,7 @@ export default function MatchDetail() {
     );
   }
 
+  // Hata / bulunamadı
   if (!m) {
     return (
       <View style={styles.center}>
@@ -82,11 +83,24 @@ export default function MatchDetail() {
     );
   }
 
+  // --- Render verileri ---
   const matchData: Match = m;
-  const venue: Venue | undefined = state.venues.find((v: Venue) => v.id === matchData.venueId);
+
+  // Store’dan venue (olmayabilir)
+  const venueFromStore: Venue | undefined = state.venues.find((v: Venue) => v.id === matchData.venueId);
+
+  // Başlıkta saha adını garanti et: venueName (DTO) -> entity.venue?.name -> store -> fallback
+  const titleName =
+    (m as any)?.venueName ??
+    (m as any)?.venue?.name ??
+    venueFromStore?.name ??
+    `Saha #${matchData.venueId}`;
 
   const currentUserId: number | null = state.currentUser?.id ?? null;
-  const isOwner = currentUserId != null && matchData.ownerId != null && Number(currentUserId) === Number(matchData.ownerId);
+  const isOwner =
+    currentUserId != null &&
+    matchData.ownerId != null &&
+    Number(currentUserId) === Number(matchData.ownerId);
 
   const myPending =
     currentUserId != null &&
@@ -127,8 +141,7 @@ export default function MatchDetail() {
       await MatchesApi.sendRequest(matchData.id, { position: normalized });
       dispatch({ type: 'SEND_JOIN_REQUEST', matchId: matchData.id, position: normalized });
       Alert.alert('İstek gönderildi', `${normalized} için başvurun iletildi.`);
-      // kendi başvurun sonrası istersen:
-      await reload();
+      await reload(); // kendi başvurundan sonra da güncelle
     } catch (e: any) {
       const msg =
         e?.response?.data?.message ??
@@ -141,7 +154,7 @@ export default function MatchDetail() {
 
   return (
     <ScrollView style={{ backgroundColor: '#eff5d2' }} contentContainerStyle={{ padding: 16, marginTop: 50 }}>
-      <Text style={styles.title}>{venue?.name ?? 'Saha'}</Text>
+      <Text style={styles.title}>{titleName}</Text>
 
       <View style={styles.details}>
         <Text style={styles.meta}>Tarih: {new Date(matchData.startTime).toLocaleString()}</Text>
@@ -201,7 +214,7 @@ export default function MatchDetail() {
         visible={reqsOpen}
         onClose={() => setReqsOpen(false)}
         matchId={matchData.id}
-        onChanged={reload}   // ✅ kabul/ret sonrası hemen güncelle
+        onChanged={reload}   // kabul/ret sonrası hemen güncelle
       />
     </ScrollView>
   );

@@ -7,7 +7,7 @@ type Props = {
   visible: boolean;
   onClose: () => void;
   matchId: number;
-  onChanged?: () => void; // ✅ parent’a değişikliği bildirmek için
+  onChanged?: () => void;     // 👈 eklendi
 };
 
 export default function RequestsModal({ visible, onClose, matchId, onChanged }: Props) {
@@ -28,15 +28,13 @@ export default function RequestsModal({ visible, onClose, matchId, onChanged }: 
     }
   }
 
-  useEffect(() => {
-    if (visible) load();
-  }, [visible, matchId]);
+  useEffect(() => { if (visible) load(); }, [visible, matchId]);
 
   async function accept(id: number) {
     try {
       await RequestsApi.accept(id);
-      await load();          // modal listesini tazele
-      onChanged?.();         // ✅ MatchDetail.reload() çağırılsın
+      await load();
+      onChanged?.();                 // 👈 kabul sonrası parent’a haber ver
       Alert.alert("Onaylandı", "İstek kabul edildi.");
     } catch (e: any) {
       Alert.alert("Hata", e?.message || "İstek kabul edilemedi.");
@@ -47,7 +45,7 @@ export default function RequestsModal({ visible, onClose, matchId, onChanged }: 
     try {
       await RequestsApi.reject(id);
       await load();
-      onChanged?.();         // ✅ MatchDetail.reload() çağırılsın
+      onChanged?.();                 // 👈 ret sonrası da
       Alert.alert("Reddedildi", "İstek reddedildi.");
     } catch (e: any) {
       Alert.alert("Hata", e?.message || "İstek reddedilemedi.");
@@ -98,4 +96,3 @@ export default function RequestsModal({ visible, onClose, matchId, onChanged }: 
     </Modal>
   );
 }
-  
