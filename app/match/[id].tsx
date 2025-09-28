@@ -2,10 +2,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useAppStore } from '../../../src/context/AppStore';
-import type { Match, Position, RosterEntry, Venue } from '../../../src/types';
-import { MatchesApi } from '../../../src/services/matches';
-import RequestsModal from '../../../components/RequestModal';
+import { useAppStore } from '../../src/context/AppStore';
+import type { Match, Position, RosterEntry, Venue } from '../../src/types';
+import { MatchesApi } from '../../src/services/matches';
+import RequestsModal from '../../components/RequestModal';
 
 export default function MatchDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
