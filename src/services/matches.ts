@@ -1,5 +1,5 @@
-import type { JoinRequest, Match, Position } from "../types";
 import api from "./api";
+import type { Position } from "../types";
 
 export type MatchListItem = {
   id: number;
@@ -13,19 +13,18 @@ export type MatchListItem = {
 };
 
 export const MatchesApi = {
-  list: (): Promise<MatchListItem[]> => api.get(`/api/Matches`),
-  detail: (id: number): Promise<Match> => api.get(`/api/Matches/${id}`),
+  // liste: opsiyonel excludeOwned
+  list: (excludeOwned?: boolean): Promise<MatchListItem[]> =>
+    api.get(`/api/Matches${excludeOwned ? `?excludeOwned=true` : ""}`),
+
+  // "maçlarım"
+  mine: (): Promise<MatchListItem[]> =>
+    api.get(`/api/Matches/mine`),
+
+  detail: (id: number) => api.get(`/api/Matches/${id}`),
   create: (data: any) => api.post("/api/Matches", data),
   cancel: (id: number) => api.post(`/api/Matches/${id}/cancel`),
 
-  // 🔧 Değişiklik: ikinci parametre artık body -> { position: Position }
   sendRequest: (id: number, body: { position: Position }) =>
     api.post(`/api/Matches/${id}/requests`, body),
-};
-
-export const RequestsApi = {
-  listPending: (matchId: number): Promise<JoinRequest[]> =>
-    api.get(`/api/requests/match/${matchId}`),
-  accept: (id: number) => api.post(`/api/requests/${id}/accept`),
-  reject: (id: number) => api.post(`/api/requests/${id}/reject`),
 };

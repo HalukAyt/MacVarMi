@@ -49,15 +49,31 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-  name="create-match"
-  options={{
-    title: "Oluştur",
-    tabBarIcon: ({ color, size }) => (
-      <FontAwesome name="plus-square" size={size} color={color} />
-    ),
-  }}
-/>
+        name="create-match"
+        options={{
+          title: "Oluştur",
+          tabBarIcon: ({ color, size }) => (
+            <FontAwesome name="plus-square" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="my-matches"
+        options={{
+          title: "Maçlarım",
+          tabBarIcon: ({ color, size }) => (
+            <FontAwesome name="list" size={size} color={color} />
+          ),
+        }}
+      />
 
+      {/* 🔒 Detay rotasını tab barda GİZLE — Sadece href:null kullan */}
+      <Tabs.Screen
+        name="match"
+        options={{
+          href: null, // yeterli
+        }}
+      />
     </Tabs>
   );
 }
