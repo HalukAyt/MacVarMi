@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { MatchesApi } from "../../src/services/matches";
+import { MatchesApi } from "../src/services/matches";
 
 // Basit bir Input helper
 function NumInput({

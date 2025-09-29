@@ -1,10 +1,10 @@
-// app/(tabs)/matches.tsx
+// app/(tabs)/my-matches.tsx
 import { useRouter, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import { FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { MatchesApi, type MatchListItem } from "../../src/services/matches";
+import { MatchesApi, type MatchListItem } from "../src/services/matches";
 
-export default function Matches() {
+export default function MyMatches() {
   const router = useRouter();
   const [items, setItems] = useState<MatchListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -12,7 +12,7 @@ export default function Matches() {
 
   const fetchList = useCallback(async () => {
     try {
-      const data = await MatchesApi.list(true);   // 👈 kendi açtıklarını gizle
+      const data = await MatchesApi.mine(); // 👈 benim maçlarım
       setItems(data);
     } finally {
       setLoading(false);
@@ -20,7 +20,6 @@ export default function Matches() {
   }, []);
 
   useEffect(() => { fetchList(); }, [fetchList]);
-
   useFocusEffect(useCallback(() => { fetchList(); }, [fetchList]));
 
   const onRefresh = useCallback(async () => {
@@ -49,7 +48,7 @@ export default function Matches() {
         )}
         ListEmptyComponent={
           <View style={{ justifyContent: "center", alignItems: "center", marginTop: 100 }}>
-            <Text>Açık maç yok.</Text>
+            <Text>Listelenecek maç yok.</Text>
           </View>
         }
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
