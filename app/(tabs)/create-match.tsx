@@ -82,7 +82,7 @@ export default function CreateMatch() {
   }
 
   return (
-    <View style={{ padding: 16 }}>
+    <View style={styles.container}>
       <Text style={styles.title}>Maç Oluştur</Text>
 
       <NumInput label="Saha (venueId)" value={venueId} onChangeText={setVenueId} placeholder="1" />
@@ -126,14 +126,15 @@ export default function CreateMatch() {
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 20, fontWeight: "700", marginBottom: 12 },
-  subtitle: { fontWeight: "700" },
-  row: { marginBottom: 10 },
-  label: { marginBottom: 6, color: "#333", fontWeight: "600" },
-  input: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, padding: 10 },
-  posCol: { width: "22%", alignItems: "center" },
-  posLabel: { fontWeight: "700", marginBottom: 4 },
-  posInput: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, padding: 8, width: "100%", textAlign: "center" },
-  primary: { backgroundColor: "#111827", paddingVertical: 12, borderRadius: 10, alignItems: "center", marginTop: 16 },
+  title: { fontSize: 22, fontWeight: "700", marginTop:50, marginLeft:15, marginBottom:15, paddingTop:10 },
+  subtitle: { fontWeight: "700", paddingBottom:20,marginLeft:15, fontSize:18 },
+  row: { marginBottom: 10, paddingLeft:8, paddingRight:8 },
+  label: { marginBottom: 6, color: "#333", fontWeight: "600", fontSize:16 },
+  input: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, padding: 10, backgroundColor:"#fff" },
+  posCol: { width: "22%", alignItems: "center", },
+  posLabel: { fontWeight: "700", marginBottom: 4,marginLeft:10 },
+  posInput: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, padding: 8, width: "100%", textAlign: "center", backgroundColor:"#e6cba8", marginLeft:10 },
+  primary: { backgroundColor: "#111827", paddingVertical: 12, borderRadius: 20, alignItems: "center", marginTop: 16 , marginLeft:1, marginRight:1},
   primaryText: { color: "white", fontWeight: "700" },
+  container: {flex:1 , backgroundColor: '#eff5d2'}
 });

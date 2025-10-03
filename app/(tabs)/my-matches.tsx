@@ -31,35 +31,49 @@ export default function MyMatches() {
 
   return (
     <View style={styles.center}>
+      
       <FlatList
-        data={items}
-        keyExtractor={(m) => String(m.id)}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.card}
-            onPress={() => router.push({ pathname: "/match/[id]", params: { id: String(item.id) } })}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.title}>{item.venueName}</Text>
-            <Text>{new Date(item.startTime).toLocaleString()}</Text>
-            <Text>Seviye: {item.levelMin}-{item.levelMax} • Ücret: {item.feePerPlayer ?? 0}₺</Text>
-            <Text>Durum: {item.status}</Text>
-          </TouchableOpacity>
-        )}
-        ListEmptyComponent={
-          <View style={{ justifyContent: "center", alignItems: "center", marginTop: 100 }}>
-            <Text>Listelenecek maç yok.</Text>
-          </View>
-        }
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
-      />
+      ListHeaderComponent={<View style={{ height: 120 }} />}
+  data={items}
+  keyExtractor={(m) => String(m.id)}
+  renderItem={({ item }) => (
+    
+    /* 
+    Başlık Ekle haluk
+    */
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => router.push({ pathname: "/match/[id]", params: { id: String(item.id) } })}
+      activeOpacity={0.8}
+    >
+      <Text style={styles.title}>{item.venueName}</Text>
+      <Text style={styles.font}>{new Date(item.startTime).toLocaleString()}</Text>
+      <Text style={styles.font}>
+        Seviye: {item.levelMin}-{item.levelMax} • Ücret: {item.feePerPlayer ?? 0}₺
+      </Text>
+      <Text style={styles.open}>Durum: {item.status}</Text>
+    </TouchableOpacity>
+  )}
+  ItemSeparatorComponent={() => <View style={{ height: 10 }} />} // 👈 sadece 10px boşluk bırak
+  contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+/>
+
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: "white", padding: 12, borderRadius: 8, marginVertical: 6 },
-  title: { fontWeight: "700", fontSize: 16 },
-  center: { flex: 1, alignItems: "center", justifyContent: "center", width: "100%" },
+  card: {
+  borderRadius: 8,
+  backgroundColor: "#e6cba8",
+  padding: 8,
+  width: 200,
+  marginRight:200,
+},
+
+  title: { fontWeight: "700", fontSize: 20 },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", width: "100%", backgroundColor:"#eff5d2" },
+  font: {fontWeight:"500", fontSize:15},
+  open: {backgroundColor: 'rgb(0, 255, 153)' , fontWeight:"500", fontSize:15, alignSelf:"flex-start", padding:3, borderRadius:8}
+  
 });
